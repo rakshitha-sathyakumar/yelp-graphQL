@@ -79,9 +79,42 @@ query($id: String){
 }
 `;
 
+const getUserOrders = gql`
+query($id: String){
+    getUserOrders(id: $id){
+        id
+        restName
+        dishName
+        firstName
+        lastName
+        orderType
+        date
+        time
+        orderStatus
+        finalOrderStatus
+}
+}
+`;
+
+const getRestReviews = gql`
+query($id: String){
+    getReviews(id: $id){
+        id
+        firstName
+        lastName
+        rating
+        review
+        date
+}
+}
+`;
+
+
 export { getUserProfile,
     getRestProfile,
     getRestMenu,
     getMenuItem,
-    getRestOrders
+    getRestOrders,
+    getUserOrders,
+    getRestReviews
     };

@@ -10,6 +10,8 @@ import '../restaurant/pagination.css';
 import { getUserOrder, cancelOrder } from '../../actions/orderAction';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
+import {getUserOrders} from '../queries/queries';
+import { graphql } from 'react-apollo';
 
 export class userOrders extends Component {
     constructor(props) {
@@ -24,9 +26,9 @@ export class userOrders extends Component {
         };
     }
 
-    componentDidMount() {
-        this.props.getUserOrder();
-    }
+    // componentDidMount() {
+    //     this.props.getUserOrder();
+    // }
 
     handleCheckboxChange = (e) => {
         e.preventDefault();
@@ -76,28 +78,32 @@ export class userOrders extends Component {
         );
     };
 
-    componentWillReceiveProps(nextProps){
-        this.setState({
-          ...this.state,
-          userOrders : !nextProps.user ? this.state.userOrders : nextProps.user,
-          tempUserOrders: !nextProps.user ? this.state.tempUserOrders : nextProps.user,
-          pageCount: Math.ceil(this.state.tempUserOrders.length / this.state.perPage)  
-        }
-       );	
-      }
+    // componentWillReceiveProps(nextProps){
+    //     this.setState({
+    //       ...this.state,
+    //       userOrders : !nextProps.user ? this.state.userOrders : nextProps.user,
+    //       tempUserOrders: !nextProps.user ? this.state.tempUserOrders : nextProps.user,
+    //       pageCount: Math.ceil(this.state.tempUserOrders.length / this.state.perPage)  
+    //     }
+    //    );	
+    //   }
 
     render () {
-        console.log(this.state.tempUserOrders);
-
-        const count = this.state.tempUserOrders.length;
-        const slice = this.state.tempUserOrders.slice(this.state.offset, this.state.offset + this.state.perPage);
+        console.log(this.props.data.getUserOrder)
+        if(!this.props.data.getUserOrders){
+            return (
+            <p> Please wait!! Loading</p>
+            )
+        } else {
+        //const count = this.state.tempUserOrders.length;
+        const slice = this.props.data.getUserOrders.slice(this.state.offset, this.state.offset + this.state.perPage);
 
         let paginationElement = (
             <ReactPaginate
               previousLabel={"← Previous"}
               nextLabel={"Next →"}
               breakLabel={<span className="gap">...</span>}
-              pageCount={Math.ceil(this.state.tempUserOrders.length / this.state.perPage) > 0 ? Math.ceil(this.state.tempUserOrders.length / this.state.perPage) : 1}
+              pageCount={Math.ceil(this.props.data.getUserOrders.length / this.state.perPage) > 0 ? Math.ceil(this.props.data.getUserOrders.length / this.state.perPage) : 1}
               onPageChange={this.handlePageClick}
               forcePage={this.state.currentPage}
               containerClassName={"pagination"}
@@ -108,7 +114,7 @@ export class userOrders extends Component {
             />
           );
           let renderOrders;
-          if(this.state.tempUserOrders) {
+          if(this.props.data.getUserOrders) {
         // console.log(this.state.yourOrders);
         renderOrders = slice.map(order => {
             return (
@@ -193,19 +199,11 @@ export class userOrders extends Component {
             </React.Fragment>
         )
     }
-         
+}      
 }
 
-userOrders.propTypes = {
-    getUserOrder: PropTypes.func.isRequired,
-    cancelOrder: PropTypes.func.isRequired,
-    user: PropTypes.object.isRequired 
-  }
-  
-  const mapStateToProps = state => { 
-      return ({
-      user: state.orders.user
-  })};
-  
-  export default connect(mapStateToProps, {getUserOrder, cancelOrder })(userOrders);
-//export default userOrders;
+export default graphql(getUserOrders, {
+    options: {
+      variables: { id: localStorage.getItem("id") }
+    }
+  })(userOrders);

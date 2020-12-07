@@ -91,6 +91,18 @@ const orderType = new GraphQLObjectType({
     })
 });
 
+const restReviewType = new GraphQLObjectType({
+    name: 'restReview',
+    fields: () => ({
+        id: { type: GraphQLID },
+        firstName: { type: GraphQLString },
+        lastName: { type: GraphQLString },
+        rating: { type: GraphQLString },
+        review: { type: GraphQLString },
+        date: {type: GraphQLString}
+    })
+});
+
 
 
 
@@ -143,6 +155,23 @@ const RootQuery = new GraphQLObjectType({
             return restOrders;
             }
         },
+        getUserOrders: {
+            type:  new GraphQLList(orderType),
+            args: {id: {type: GraphQLString}},
+            async resolve(parent, args) {
+            let userOrders =  await order.find({userId: args.id } )
+            return userOrders;
+            }
+        },
+        getReviews: {
+            type:  new GraphQLList(restReviewType),
+            args: {id: {type: GraphQLString}},
+            async resolve(parent, args) {
+            let restReviews =  await rest.find({_id: args.id } )
+            console.log(restReviews[0])
+            return restReviews[0].review;
+        }
+    },
 
 
     }

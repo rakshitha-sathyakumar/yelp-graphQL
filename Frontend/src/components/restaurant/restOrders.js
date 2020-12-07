@@ -35,11 +35,11 @@ export class restOrders extends Component {
     }
 
 
-    componentDidMount() {
-        console.log("Hiiiii")
-        this.setState({restOrders: this.props.data.getRestOrders})
-        this.setState({tempRestOrder: this.props.data.getRestOrders})
-    }
+    // componentDidMount() {
+    //     console.log("Hiiiii")
+    //     this.setState({restOrders: this.props.data.getRestOrders})
+    //     this.setState({tempRestOrder: this.props.data.getRestOrders})
+    // }
 
 
     handleCheckboxChange = (e) => {

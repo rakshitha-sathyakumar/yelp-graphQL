@@ -14,18 +14,37 @@ import food1 from './../images/food1.jpg'
 import food2 from './../images/food2.jpg'
 import axios from 'axios';
 import backendServer from "../../backendServer";
-import {getRestProfile} from "../queries/queries";
-import { graphql } from 'react-apollo';
+import {getRestProfile, getRestReviews} from "../queries/queries";
+import { graphql, withApollo } from 'react-apollo';
+import { compose } from 'recompose'
 
 
 class RestaurantPage extends Component {
     constructor(props) {
         super(props);
         this.state = {
+            profileDetails: [],
             reviewList: []
         };
-        this.onChange = this.onChange.bind(this);
-        this.onUpdate = this.onUpdate.bind(this);
+    }
+
+    async componentDidMount() {
+        var { data } = await this.props.client.query({
+          query: getRestProfile,
+    
+          variables: { id: localStorage.getItem("id") },
+          fetchPolicy: "no-cache",
+        });
+        this.setState({profileDetails: data.getRestProfile})
+
+        var { data } = await this.props.client.query({
+          query: getRestReviews,
+
+          variables: { id: localStorage.getItem("id") },
+          fetchPolicy: "no-cache",
+        });
+        console.log(data);
+        this.setState({reviewList: data.getReviews})
     }
 
     createElements(n) {
@@ -43,20 +62,28 @@ class RestaurantPage extends Component {
             [e.target.name]: e.target.value
         })
     }
-
-    onUpdate = (e) => {
-        //prevent page from refresh
-        e.preventDefault();
-
-        let data = Object.assign({}, this.state);
-        this.props.updateRest(data);
-    };
     render() {
-        if(!this.props.data.getRestProfile) {
+        let renderReview;
+        if(!this.state.profileDetails) {
             return (
                 <p> Please wait!! Loading</p>
                 )
         } else {
+            if(this.state.reviewList){
+            renderReview = this.state.reviewList.map(review => {
+            return (
+                <div class='col-md-10'>
+                        <h3 style={{margin: "5px"}}>{review.firstName} {review.lastName} </h3>
+                        <h6 style={{margin: "5px"}}> {this.createElements(review.rating)}   {review.date}</h6>
+                        <p style={{margin: "5px"}}>"{review.review}"</p>
+
+                    <br/>
+                    <hr />
+                </div>
+            )
+        })
+    }
+}
       return (
 
         <React.Fragment>
@@ -80,8 +107,8 @@ class RestaurantPage extends Component {
             <div class="row">
             <div class="col-md-6" style={{marginLeft: "50px", textAlign: "top"}}>
                 <br />
-                <h1 style={{fontWeight: "bolder", margin:"0"}}> {this.props.data.getRestProfile.name}</h1>
-                <p> {this.props.data.getRestProfile.street}{','} {this.props.data.getRestProfile.city}{','} {this.props.data.getRestProfile.zipcode}</p>
+                <h1 style={{fontWeight: "bolder", margin:"0"}}> {this.state.profileDetails.name}</h1>
+                <p> {this.state.profileDetails.street}{','} {this.state.profileDetails.city}{','} {this.state.profileDetails.zipcode}</p>
                 <i class='fas fa-star' style={{color: "red"}}></i>
                 <i class='fas fa-star' style={{color: "red"}}></i>
                 <i class='fas fa-star' style={{color: "red"}}></i>
@@ -89,7 +116,7 @@ class RestaurantPage extends Component {
                 <i class='fas fa-star-half' style={{color: "red"}}></i>
                 <div style={{overflow: "hidden"}}>
                     <p style={{float: "left", color: "green"}}>Open</p>
-                    <p style={{float: "left", marginLeft: "10px"}}>{this.props.data.getRestProfile.timings}</p>
+                    <p style={{float: "left", marginLeft: "10px"}}>{this.state.profileDetails.timings}</p>
                 </div>
                 <Button href='/viewDish' style = {{backgroundColor: "red", fontSize: "20px", border: '1px solid red', color: 'white'}} variant="link" ><i class="fas fa-utensils"></i> Menu </Button> {' '}
                 <Button href = '/events' style = {{marginLeft: "10px", backgroundColor: "red", fontSize: "20px", border: '1px solid red', color: 'white'}} variant="link"><i class="fas fa-calendar-week"></i>  Events </Button> {' '}
@@ -97,19 +124,19 @@ class RestaurantPage extends Component {
                 <hr />
                 <h5 style={{textDecoration:"underline"}}> Available Delivery Methods </h5> {'  '}
                 <div>
-                    <p> <i class="fas fa-check" style={{color: "green"}}></i>  {this.props.data.getRestProfile.deliveryMethod}</p>
+                    <p> <i class="fas fa-check" style={{color: "green"}}></i>  {this.state.profileDetails.deliveryMethod}</p>
                 </div>
                 <hr />
                 <h4> Review Hightlights</h4>
                 <hr />
-                {/* {renderReview} */}
+                {renderReview}
             </div>
             <div class="col-xs-8" class="float-right" style={{marginLeft:"400px", marginTop: "20px"}}>
                 <p>
-                <i class='fas fa-phone'></i> {this.props.data.getRestProfile.contactNo}</p>
+                <i class='fas fa-phone'></i> {this.state.profileDetails.contactNo}</p>
                 <hr />
                 <p>
-                <i class='fas fa-envelope'></i> {this.props.data.getRestProfile.email}</p>
+                <i class='fas fa-envelope'></i> {this.state.profileDetails.email}</p>
                 <hr/>
                 <a href='/updateRestaurant'>
                     <span>
@@ -135,10 +162,18 @@ class RestaurantPage extends Component {
       );
     }
   }
-}
 
-export default graphql(getRestProfile, {
+export default compose(
+    withApollo,
+
+    graphql(getRestProfile, {
     options: {
       variables: { id: localStorage.getItem("id") }
     }
-  })(RestaurantPage);
+  }),
+  graphql(getRestReviews, {
+    options: {
+      variables: { id: localStorage.getItem("id") }
+    }
+  })
+)(RestaurantPage);
