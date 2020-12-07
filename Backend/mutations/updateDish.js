@@ -1,5 +1,6 @@
 const User = require("../models/customer");
 const Rest = require("../models/restaurant");
+const Order = require("../models/orders");
 
 const addDish = async (args) => {
     let rest = await Rest.findOne({ _id: args.id });
@@ -42,7 +43,24 @@ const updateDish = async (args) => {
     }
 };
 
+const updateOrderStatus = async (args) => {
+    if(args) {
+    if(args.status == 'Picked up' || args.status == 'Delivered') {
+        await Order.findByIdAndUpdate({_id: args.id }, 
+            {$set:{orderStatus: args.status,finalOrderStatus: 'Delivered order'} })
+
+        } else {
+            await Order.findByIdAndUpdate({_id: args.id }, 
+                {$set:{orderStatus: args.status} })
+        }
+        return { status: 200, message: "ORDER_STATUS_UPDATED" };
+    } else {
+        return { status: 500, message: "INTERNAL_SERVER_ERROR" };
+    }
+};
+
 
 
 exports.addDish = addDish;
 exports.updateDish = updateDish;
+exports.updateOrderStatus = updateOrderStatus;

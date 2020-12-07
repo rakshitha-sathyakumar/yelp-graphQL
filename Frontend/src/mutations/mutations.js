@@ -65,11 +65,22 @@ mutation updateDish ($restId: String, $id: String, $dishName: String, $ingredien
 }
 `;
 
+const updateOrderStatusMutation= gql`
+mutation updateOrderStatus ($id: String, $status: String ){
+    updateOrderStatus(id: $id, status: $status)
+{
+    message
+    status
+}
+}
+`;
+
 export {addUserMutation,
     addRestMutation,
     loginMutation,
     updateUserMutation,
     updateRestMutation,
     addDishMutation,
-    updateDishMutation
+    updateDishMutation,
+    updateOrderStatusMutation
 };

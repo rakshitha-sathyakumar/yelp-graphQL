@@ -10,11 +10,12 @@ import axios from 'axios';
 import backendServer from '../../backendServer';
 import ReactPaginate from 'react-paginate';
 import './pagination.css';
-import { getRestOrder, updateOrderStatus, sendMessage } from '../../actions/orderAction'
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { getRestOrders } from "../queries/queries";
 import { graphql } from 'react-apollo';
+import {updateOrderStatusMutation} from '../../mutations/mutations';
+import { compose } from 'recompose'
 
 export class restOrders extends Component {
     constructor(props) {
@@ -34,11 +35,11 @@ export class restOrders extends Component {
     }
 
 
-    // componentDidMount() {
-    //     console.log("Hiiiii")
-    //     this.setState({restOrders: this.props.data.getRestOrders})
-    //     this.setState({tempRestOrder: this.props.data.getRestOrders})
-    // }
+    componentDidMount() {
+        console.log("Hiiiii")
+        this.setState({restOrders: this.props.data.getRestOrders})
+        this.setState({tempRestOrder: this.props.data.getRestOrders})
+    }
 
 
     handleCheckboxChange = (e) => {
@@ -84,26 +85,31 @@ export class restOrders extends Component {
     //    );	
     //   }
 
-      handleOpenModal = (e) => {
-        const filteredData = this.state.restOrders.filter(each => each._id === e.target.value)
-        this.setState({ showModal: true, chatData: filteredData[0].message, orderId: e.target.value});
-        
-      }
-
-      handleCloseModal = () => {
-        this.setState({ showModal: false });
-      }
-
-
-    onUpdate = (e) => {
+    onUpdate = async (e) => {
         e.preventDefault();
-        const data = {
-            order_id: this.state.order_id,
-            order_status: this.state.orderStatus,
+        let mutationResponse = await this.props.updateOrderStatusMutation({
+        variables: {
+            id: this.state.order_id,
+            status: this.state.orderStatus,
         }
-        console.log(data);
-        this.props.updateOrderStatus(data);
-      }
+        });
+        console.log(mutationResponse)
+        let response = mutationResponse.data.updateOrderStatus;
+        if (response) {
+            if (response.status === "200") {
+                console.log(response)
+                this.setState({
+                    success: true,
+                    signupFlag: true
+                });
+            } else {
+                this.setState({
+                    message: response.message,
+                    signupFlag: true
+                });
+            }
+        }
+    }
 
       handleReset = (e) => {
         console.log("handle reset")
@@ -115,12 +121,16 @@ export class restOrders extends Component {
       
 
     render () {
-        console.log(this.state.tempRestOrder)
         if(!this.props.data.getRestOrders){
             return (
             <p> Please wait!! Loading</p>
             )
         } else {
+            let redirectVar = null;
+            if(this.state.success){
+            alert("Order status updated");
+            redirectVar = <Redirect to="/restOrders" />
+            }
         const slice = this.props.data.getRestOrders.slice(this.state.offset, this.state.offset + this.state.perPage);
 
         let paginationElement = (
@@ -146,9 +156,9 @@ export class restOrders extends Component {
             let button2;
             let chatButton;
             if(order.orderType === 'pickup'){
-                button1 = <Form.Check id = {order._id} name={order.dishName} label='Pickup ready' 
+                button1 = <Form.Check id = {order.id} name={order.dishName} label='Pickup ready' 
                             value='Pickup ready' onChange={this.handleCheckboxChange} style={{marginLeft:"10px", color: 'red' }}/>
-                button2 = <Form.Check id = {order._id} name={order.dishName} label='Picked up' 
+                button2 = <Form.Check id = {order.id} name={order.dishName} label='Picked up' 
                     value='Picked up' onChange={this.handleCheckboxChange} style={{marginLeft:"10px", color: 'red' }}/>
             } else {
                 button1 = <Form.Check id = {order._id} name={order.dishName} label='On the way' 
@@ -169,7 +179,7 @@ export class restOrders extends Component {
                         <hr />
                         <Form onSubmit={this.onUpdate}>
                             <Form.Check
-                                id = {order._id}
+                                id = {order.id}
                                 name={order.dishName}
                                 label='Order received'
                                 value='Order received'
@@ -177,7 +187,7 @@ export class restOrders extends Component {
                                 style={{marginLeft:"10px", color: 'red' }}
                             />
                             <Form.Check
-                                id = {order._id}
+                                id = {order.id}
                                 name={order.dishName}
                                 label='Preparing'
                                 value='Preparing'
@@ -202,6 +212,7 @@ export class restOrders extends Component {
     }
         return (
             <React.Fragment>
+                {redirectVar}
                 <Navigationbar/>
                 <div class="container">
                     <div style={{float: "left"}}>
@@ -235,7 +246,7 @@ export class restOrders extends Component {
                         <Button style={{marginLeft:"10px", marginTop: "10px", backgroundColor: "red", border: "1px solid red" }} type="submit" onClick={this.handleReset}> Remove filter </Button>
                         </Form>
                     </div>
-                    <div style = {{paddingTop: "100", paddingLeft: "40%"}}>
+                    <div style = {{paddingTop: "100%", paddingLeft: "40%"}}>
                 {paginationElement}
                 </div>
 
@@ -247,8 +258,15 @@ export class restOrders extends Component {
          
 }
 }
-export default graphql(getRestOrders, {
-    options: {
-      variables: { id: localStorage.getItem("id")}
-    }
-  })(restOrders);
+
+  export default compose(
+    graphql(getRestOrders, {
+      options: () => {
+        return {
+          variables: { id: localStorage.getItem('id') },
+          fetchPolicy: 'network-only',
+        };
+      },
+    }),
+    graphql(updateOrderStatusMutation, { name: 'updateOrderStatusMutation' }),
+  )(restOrders);

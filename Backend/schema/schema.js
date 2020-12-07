@@ -6,7 +6,7 @@ const { login } = require('../mutations/login');
 const { userSignup, restSignup } = require('../mutations/signup');
 const { updateUserProfile } = require('../mutations/updateProfile');
 const { updateRestProfile } = require('../mutations/updateProfile');
-const { addDish, updateDish } = require('../mutations/updateDish');
+const { addDish, updateDish, updateOrderStatus } = require('../mutations/updateDish');
 
 const {
     GraphQLObjectType,
@@ -243,7 +243,6 @@ const Mutation = new GraphQLObjectType({
             },
             async resolve(parent, args) {
                 let result = await addDish(args);
-                console.log(result);
                 return result;
             }
         },
@@ -259,11 +258,23 @@ const Mutation = new GraphQLObjectType({
                 category: { type: GraphQLString },
             },
             async resolve(parent, args) {
-                console.log(args)
                 let result = await updateDish(args);
                 return result;
             }
         },
+        updateOrderStatus: {
+            type: StatusType,
+            args: {
+                id : { type: GraphQLString },
+                status: { type: GraphQLString },
+            },
+            async resolve(parent, args) {
+                console.log(args);
+                let result = await updateOrderStatus(args);
+                return result;
+            }
+        },
+
     }
 })
 
