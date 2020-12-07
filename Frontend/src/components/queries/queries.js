@@ -62,8 +62,26 @@ query($restId: String, $dishId: String){
 }
 `;
 
+const getRestOrders = gql`
+query($id: String){
+    getRestOrders(id: $id){
+        id
+        restName
+        dishName
+        firstName
+        lastName
+        orderType
+        date
+        time
+        orderStatus
+        finalOrderStatus
+}
+}
+`;
+
 export { getUserProfile,
     getRestProfile,
     getRestMenu,
-    getMenuItem
+    getMenuItem,
+    getRestOrders
     };

@@ -135,10 +135,11 @@ const RootQuery = new GraphQLObjectType({
             }
         },
         getRestOrders: {
-            type:  orderType,
+            type:  new GraphQLList(orderType),
             args: {id: {type: GraphQLString}},
             async resolve(parent, args) {
-            let restOrders =  await Order.find({restId: msg.id } )
+            let restOrders =  await order.find({restId: args.id } )
+            console.log(restOrders)
             return restOrders;
             }
         },

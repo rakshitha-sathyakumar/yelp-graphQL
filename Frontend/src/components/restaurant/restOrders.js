@@ -13,6 +13,8 @@ import './pagination.css';
 import { getRestOrder, updateOrderStatus, sendMessage } from '../../actions/orderAction'
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
+import { getRestOrders } from "../queries/queries";
+import { graphql } from 'react-apollo';
 
 export class restOrders extends Component {
     constructor(props) {
@@ -25,17 +27,18 @@ export class restOrders extends Component {
             chatData: [],
             message: '',
             offset: 0,
-            perPage: 1,
+            perPage: 3,
             currentPage: 0,
             pageCount: null
         };
     }
 
 
-    componentDidMount() {
-        this.props.getRestOrder();
-        console.log(this.props);
-    }
+    // componentDidMount() {
+    //     console.log("Hiiiii")
+    //     this.setState({restOrders: this.props.data.getRestOrders})
+    //     this.setState({tempRestOrder: this.props.data.getRestOrders})
+    // }
 
 
     handleCheckboxChange = (e) => {
@@ -71,15 +74,15 @@ export class restOrders extends Component {
         );
     };
 
-    componentWillReceiveProps(nextProps){
-        this.setState({
-          ...this.state,
-          restOrders : !nextProps.user ? this.state.restOrders : nextProps.user,
-          tempRestOrder: !nextProps.user ? this.state.tempRestOrder : nextProps.user,
-          pageCount: Math.ceil(this.state.tempRestOrder.length / this.state.perPage)  
-        }
-       );	
-      }
+    // componentWillReceiveProps(nextProps){
+    //     this.setState({
+    //       ...this.state,
+    //       restOrders : !nextProps.user ? this.state.restOrders : nextProps.user,
+    //       tempRestOrder: !nextProps.user ? this.state.tempRestOrder : nextProps.user,
+    //       pageCount: Math.ceil(this.state.tempRestOrder.length / this.state.perPage)  
+    //     }
+    //    );	
+    //   }
 
       handleOpenModal = (e) => {
         const filteredData = this.state.restOrders.filter(each => each._id === e.target.value)
@@ -109,52 +112,23 @@ export class restOrders extends Component {
           console.log(allOrders)
           this.setState({tempRestOrder: allOrders})
       }
-    
-      handleInputChange = (e) => {
-        console.log(e.target.value)
-        this.setState({
-            message: e.target.value
-        })
-    }
-
-      handleSendMessage = (e) => {
-        e.preventDefault();
-        console.log(this.state.message)
-        var today = new Date();
-        var current_date = ((today.getMonth()+1)+"/"+today.getDate()+"/"+today.getFullYear());
-        var current_time = (today.getHours() + ":"+today.getMinutes()+":"+today.getSeconds());
-        const data = {
-            orderId: this.state.orderId,
-            message: this.state.message,
-            date: current_date,
-            time: current_time,
-            owner: localStorage.getItem("rest_name")
-        }
-        console.log(data);
-        this.props.sendMessage(data);
-        // axios.post(`${backendServer}/yelp/messages/initiate`, data)
-        // .then(response => {
-        //     if(response.status === 200) {
-        //         alert("Reply successfully sent")
-        //     }
-        // })
-    }
-
       
 
     render () {
-        console.log(this.props);
-        console.log(this.state.tempRestOrder);
-
-        const count = this.state.tempRestOrder.length;
-        const slice = this.state.tempRestOrder.slice(this.state.offset, this.state.offset + this.state.perPage);
+        console.log(this.state.tempRestOrder)
+        if(!this.props.data.getRestOrders){
+            return (
+            <p> Please wait!! Loading</p>
+            )
+        } else {
+        const slice = this.props.data.getRestOrders.slice(this.state.offset, this.state.offset + this.state.perPage);
 
         let paginationElement = (
             <ReactPaginate
               previousLabel={"← Previous"}
               nextLabel={"Next →"}
               breakLabel={<span className="gap">...</span>}
-              pageCount={Math.ceil(this.state.tempRestOrder.length / this.state.perPage) > 0 ? Math.ceil(this.state.tempRestOrder.length / this.state.perPage) : 10}
+              pageCount={Math.ceil(this.props.data.getRestOrders.length / this.state.perPage) > 0 ? Math.ceil(this.props.data.getRestOrders.length / this.state.perPage) : 10}
               onPageChange={this.handlePageClick}
               forcePage={this.state.currentPage}
               containerClassName={"pagination"}
@@ -165,37 +139,8 @@ export class restOrders extends Component {
             />
           );
 
-          let renderChat;
-        if(this.state.chatData.length >= 1) {
-            renderChat = this.state.chatData.map(chat => {
-                if(chat.firstName) {
-                return (
-                    <div>
-                        <p style={{marginBottom:"0px", float:"right"}}> {chat.message} </p>
-                        <br />
-                        <p class="text-muted" style={{marginBottom:"0px", float:"right"}}> {chat.owner} </p>
-                        <br />
-                        <p class="text-muted" style={{float:"right"}}> {chat.date} {chat.time} </p>
-                        <br />
-                        <br />
-                        <br />
-                    </div>
-                )
-                } else {
-                    return (
-                        <div>
-                            <p style={{marginBottom:"0px"}}> {chat.message} </p>
-                            <p class="text-muted" style ={{marginBottom:"0px"}}> {chat.owner} </p>
-                            <p class="text-muted"> {chat.date} {chat.time} </p>
-                            <br />
-                        </div>
-                    )
-                }
-            })
-        }
-
           let renderOrders;
-          if(this.state.tempRestOrder) {
+          if(this.props.data.getRestOrders) {
             renderOrders = slice.map((order,key) => {
             let button1;
             let button2;
@@ -210,9 +155,6 @@ export class restOrders extends Component {
                             value='On the way' onChange={this.handleCheckboxChange} style={{marginLeft:"10px", color: 'red' }}/>
                 button2 = <Form.Check id = {order._id} name={order.dishName} label='Delivered' 
                     value='Delivered' onChange={this.handleCheckboxChange} style={{marginLeft:"10px", color: 'red' }}/>
-            }
-            if(order.message.length >= 1) {
-                chatButton = <Button value={order._id} style={{ marginLeft:"10px", marginTop: "10px", backgroundColor: "red", border: "1px solid red"}} onClick={this.handleOpenModal}> Chat </Button>
             }
             return (
                 <div>
@@ -248,19 +190,6 @@ export class restOrders extends Component {
                             <div>
                                 <Button style={{ marginLeft:"10px", marginTop: "10px", backgroundColor: "red", border: "1px solid red"}} type="submit"> 
                                     Update order status </Button>
-                                    {chatButton}
-                                    <Modal show={this.state.showModal} onHide={this.handleCloseModal}>
-                                        <Modal.Header closeButton>
-                                            <Modal.Title style={{fontSize: "30px"}}> Your conversation </Modal.Title>
-                                        </Modal.Header>
-                                        <Modal.Body>
-                                            {renderChat}
-                                            <input class="form-control input-md" type='text' style={{ height: '70px'}} onChange={this.handleInputChange}/>
-                                        </Modal.Body>
-                                        <Modal.Footer>
-                                            <Button style={{border: "1px solid red", backgroundColor: "red", color: 'white',  width: "100px", borderRadius: '5px'}} onClick = {this.handleSendMessage}>Reply</Button>
-                                        </Modal.Footer>
-                                    </Modal>
                             </div>
                         </Form>
                     </Card>
@@ -306,7 +235,7 @@ export class restOrders extends Component {
                         <Button style={{marginLeft:"10px", marginTop: "10px", backgroundColor: "red", border: "1px solid red" }} type="submit" onClick={this.handleReset}> Remove filter </Button>
                         </Form>
                     </div>
-                    <div style = {{paddingTop: "500px", paddingLeft: "40%"}}>
+                    <div style = {{paddingTop: "100", paddingLeft: "40%"}}>
                 {paginationElement}
                 </div>
 
@@ -317,19 +246,9 @@ export class restOrders extends Component {
     }
          
 }
-
-restOrders.propTypes = {
-    getRestOrder: PropTypes.func.isRequired,
-    updateOrderStatus: PropTypes.func.isRequired,
-    sendMessage: PropTypes.func.isRequired,
-    user: PropTypes.object.isRequired,
-    status: PropTypes.object.isRequired
 }
-
-const mapStateToProps = state => { 
-    return ({
-    user: state.orders.user,
-    status: state.orders.status
-})};
-
-export default connect(mapStateToProps, { getRestOrder, updateOrderStatus, sendMessage })(restOrders);
+export default graphql(getRestOrders, {
+    options: {
+      variables: { id: localStorage.getItem("id")}
+    }
+  })(restOrders);
