@@ -8,6 +8,8 @@ import food1 from './../images/food1.jpg'
 import food2 from './../images/food2.jpg'
 import axios from 'axios';
 import backendServer from "../../backendServer";
+import {getRestProfile, getRestReviews} from "../queries/queries";
+import { graphql, withApollo } from 'react-apollo';
 
 
 class userRestpage extends Component {
@@ -31,26 +33,34 @@ class userRestpage extends Component {
         return elements;
       }
 
-    componentDidMount() {
-        console.log(localStorage.getItem("rest_name"));
-        axios.get(`${backendServer}/yelp/restProfile/${localStorage.getItem("rest_id")}`)
-        .then(res => {
-            console.log(res);
-            this.setState({ restProfile: res.data });
-        axios.get(`${backendServer}/yelp/addReview/${localStorage.getItem("rest_id")}`)
-        .then(res =>{
-        console.log(res);
-    })
-        
-    })
+    async componentDidMount() {
+        var { data } = await this.props.client.query({
+            query: getRestProfile,
+      
+            variables: { id: localStorage.getItem("rest_id") },
+            fetchPolicy: "no-cache",
+          });
+          this.setState({restProfile: data.getRestProfile})
+
+          var { data } = await this.props.client.query({
+            query: getRestReviews,
+  
+            variables: { id: localStorage.getItem("rest_id") },
+            fetchPolicy: "no-cache",
+          });
+          console.log(data);
+          this.setState({reviewList: data.getReviews})
 }
     
     render() {
-        //this.setState({reviewList: this.state.resProfile.review});
-        //console.log(this.state.reviewList);
-        let renderReview;
-        if (this.state.restProfile.review) {
-        renderReview = this.state.restProfile.review.map(review => {
+       let renderReview;
+        if(!this.state.restProfile) {
+            return (
+                <p> Please wait!! Loading</p>
+                )
+        } else {
+            if(this.state.reviewList){
+            renderReview = this.state.reviewList.map(review => {
             return (
                 <div class='col-md-10'>
                         <h3 style={{margin: "5px"}}>{review.firstName} {review.lastName} </h3>
@@ -63,6 +73,7 @@ class userRestpage extends Component {
             )
         })
     }
+}
       return (
         <React.Fragment>
           <Navigationbar />
@@ -131,4 +142,4 @@ class userRestpage extends Component {
     }
 }
 
-export default userRestpage;
+export default withApollo(userRestpage);

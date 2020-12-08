@@ -13,7 +13,7 @@ import './pagination.css';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { getRestOrders } from "../queries/queries";
-import { graphql } from 'react-apollo';
+import { graphql, withApollo } from 'react-apollo';
 import {updateOrderStatusMutation} from '../../mutations/mutations';
 import { compose } from 'recompose'
 
@@ -34,12 +34,17 @@ export class restOrders extends Component {
         };
     }
 
-
-    // componentDidMount() {
-    //     console.log("Hiiiii")
-    //     this.setState({restOrders: this.props.data.getRestOrders})
-    //     this.setState({tempRestOrder: this.props.data.getRestOrders})
-    // }
+    async componentDidMount() {
+        const { data } = await this.props.client.query({
+          query: getRestOrders,
+          variables: { id: localStorage.getItem("id")},
+          fetchPolicy: "no-cache",
+        
+        });
+        console.log(data)
+        this.setState({restOrders : data.getRestOrders})
+        this.setState({tempRestOrder : data.getRestOrders})
+      }
 
 
     handleCheckboxChange = (e) => {
@@ -78,8 +83,8 @@ export class restOrders extends Component {
     // componentWillReceiveProps(nextProps){
     //     this.setState({
     //       ...this.state,
-    //       restOrders : !nextProps.user ? this.state.restOrders : nextProps.user,
-    //       tempRestOrder: !nextProps.user ? this.state.tempRestOrder : nextProps.user,
+    //       restOrders : !nextProps.user ? this.state : nextProps.user,
+    //       tempRestOrder: !nextProps.user ? this.props.data.getRestOrders : nextProps.user,
     //       pageCount: Math.ceil(this.state.tempRestOrder.length / this.state.perPage)  
     //     }
     //    );	
@@ -121,24 +126,20 @@ export class restOrders extends Component {
       
 
     render () {
-        if(!this.props.data.getRestOrders){
-            return (
-            <p> Please wait!! Loading</p>
-            )
-        } else {
+        console.log(this.state.tempRestOrder)
             let redirectVar = null;
             if(this.state.success){
             alert("Order status updated");
             redirectVar = <Redirect to="/restOrders" />
             }
-        const slice = this.props.data.getRestOrders.slice(this.state.offset, this.state.offset + this.state.perPage);
+        const slice = this.state.tempRestOrder.slice(this.state.offset, this.state.offset + this.state.perPage);
 
         let paginationElement = (
             <ReactPaginate
               previousLabel={"← Previous"}
               nextLabel={"Next →"}
               breakLabel={<span className="gap">...</span>}
-              pageCount={Math.ceil(this.props.data.getRestOrders.length / this.state.perPage) > 0 ? Math.ceil(this.props.data.getRestOrders.length / this.state.perPage) : 10}
+              pageCount={Math.ceil(this.state.tempRestOrder.length / this.state.perPage) > 0 ? Math.ceil(this.state.tempRestOrder.length / this.state.perPage) : 10}
               onPageChange={this.handlePageClick}
               forcePage={this.state.currentPage}
               containerClassName={"pagination"}
@@ -150,7 +151,7 @@ export class restOrders extends Component {
           );
 
           let renderOrders;
-          if(this.props.data.getRestOrders) {
+          if(this.state.tempRestOrder) {
             renderOrders = slice.map((order,key) => {
             let button1;
             let button2;
@@ -161,9 +162,9 @@ export class restOrders extends Component {
                 button2 = <Form.Check id = {order.id} name={order.dishName} label='Picked up' 
                     value='Picked up' onChange={this.handleCheckboxChange} style={{marginLeft:"10px", color: 'red' }}/>
             } else {
-                button1 = <Form.Check id = {order._id} name={order.dishName} label='On the way' 
+                button1 = <Form.Check id = {order.id} name={order.dishName} label='On the way' 
                             value='On the way' onChange={this.handleCheckboxChange} style={{marginLeft:"10px", color: 'red' }}/>
-                button2 = <Form.Check id = {order._id} name={order.dishName} label='Delivered' 
+                button2 = <Form.Check id = {order.id} name={order.dishName} label='Delivered' 
                     value='Delivered' onChange={this.handleCheckboxChange} style={{marginLeft:"10px", color: 'red' }}/>
             }
             return (
@@ -171,7 +172,7 @@ export class restOrders extends Component {
                     <Card style={{border: "none"}}>
                         <Card.Title style={{marginLeft:"10px", fontSize: "25px"}}>{order.dishName} </Card.Title>
                         <Card.Text><span style={{fontWeight: "bold", marginLeft:"10px"}}> Customer: </span>
-                            <Link to = {{pathname: `/userProfile/${order.userId}`, state:{orderId: order._id}}}> {order.firstName} {order.lastName} </Link> </Card.Text>
+                            <Link to = {{pathname: `/userProfile/${order.userId}`, state:{orderId: order.id}}}> {order.firstName} {order.lastName} </Link> </Card.Text>
                         {/* <Card.Text> <span style={{fontWeight: "bold", marginLeft:"10px"}}>Restuarant:</span> {order.rest_name}</Card.Text> */}
                         <Card.Text> <span style={{fontWeight: "bold", marginLeft:"10px"}}>Order type:</span> {order.orderType}</Card.Text>
                         <Card.Text> <span style={{fontWeight: "bold", marginLeft:"10px"}}>Order Status:</span> {order.orderStatus}</Card.Text>
@@ -257,16 +258,5 @@ export class restOrders extends Component {
     }
          
 }
-}
 
-  export default compose(
-    graphql(getRestOrders, {
-      options: () => {
-        return {
-          variables: { id: localStorage.getItem('id') },
-          fetchPolicy: 'network-only',
-        };
-      },
-    }),
-    graphql(updateOrderStatusMutation, { name: 'updateOrderStatusMutation' }),
-  )(restOrders);
+export default compose(withApollo,  graphql(updateOrderStatusMutation, { name: "updateOrderStatusMutation" }))(restOrders)

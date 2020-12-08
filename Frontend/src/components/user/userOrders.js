@@ -11,7 +11,7 @@ import { getUserOrder, cancelOrder } from '../../actions/orderAction';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import {getUserOrders} from '../queries/queries';
-import { graphql } from 'react-apollo';
+import { graphql, withApollo } from 'react-apollo';
 
 export class userOrders extends Component {
     constructor(props) {
@@ -26,9 +26,17 @@ export class userOrders extends Component {
         };
     }
 
-    // componentDidMount() {
-    //     this.props.getUserOrder();
-    // }
+    async componentDidMount() {
+        const { data } = await this.props.client.query({
+          query: getUserOrders,
+          variables: { id: localStorage.getItem("id")},
+          fetchPolicy: "no-cache",
+        
+        });
+        console.log(data)
+        this.setState({userOrders : data.getUserOrders})
+        this.setState({tempUserOrders : data.getUserOrders})
+      }
 
     handleCheckboxChange = (e) => {
         e.preventDefault();
@@ -89,21 +97,16 @@ export class userOrders extends Component {
     //   }
 
     render () {
-        console.log(this.props.data.getUserOrder)
-        if(!this.props.data.getUserOrders){
-            return (
-            <p> Please wait!! Loading</p>
-            )
-        } else {
+        console.log(this.state.tempUserOrders)
         //const count = this.state.tempUserOrders.length;
-        const slice = this.props.data.getUserOrders.slice(this.state.offset, this.state.offset + this.state.perPage);
+        const slice = this.state.tempUserOrders.slice(this.state.offset, this.state.offset + this.state.perPage);
 
         let paginationElement = (
             <ReactPaginate
               previousLabel={"← Previous"}
               nextLabel={"Next →"}
               breakLabel={<span className="gap">...</span>}
-              pageCount={Math.ceil(this.props.data.getUserOrders.length / this.state.perPage) > 0 ? Math.ceil(this.props.data.getUserOrders.length / this.state.perPage) : 1}
+              pageCount={Math.ceil(this.state.tempUserOrders.length / this.state.perPage) > 0 ? Math.ceil(this.state.tempUserOrders.length / this.state.perPage) : 1}
               onPageChange={this.handlePageClick}
               forcePage={this.state.currentPage}
               containerClassName={"pagination"}
@@ -114,7 +117,7 @@ export class userOrders extends Component {
             />
           );
           let renderOrders;
-          if(this.props.data.getUserOrders) {
+          if(this.state.tempUserOrders) {
         // console.log(this.state.yourOrders);
         renderOrders = slice.map(order => {
             return (
@@ -200,10 +203,5 @@ export class userOrders extends Component {
         )
     }
 }      
-}
 
-export default graphql(getUserOrders, {
-    options: {
-      variables: { id: localStorage.getItem("id") }
-    }
-  })(userOrders);
+export default withApollo(userOrders)

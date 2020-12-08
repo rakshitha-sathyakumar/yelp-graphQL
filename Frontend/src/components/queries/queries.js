@@ -66,6 +66,7 @@ const getRestOrders = gql`
 query($id: String){
     getRestOrders(id: $id){
         id
+        userId
         restName
         dishName
         firstName
@@ -109,6 +110,23 @@ query($id: String){
 }
 `;
 
+const getSearchResult = gql`
+query($keyword: String, $category: Int){
+    getRestSearch(keyword: $keyword, category: $category){
+            id
+            name
+            email
+            street
+            city
+            zipcode
+            cuisine
+            timings
+            contactNo
+            deliveryMethod     
+}
+}
+`;
+
 
 export { getUserProfile,
     getRestProfile,
@@ -116,5 +134,6 @@ export { getUserProfile,
     getMenuItem,
     getRestOrders,
     getUserOrders,
-    getRestReviews
+    getRestReviews,
+    getSearchResult
     };

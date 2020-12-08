@@ -47,7 +47,7 @@ handleLogout = () => {
                                 },
                             }}> <a style= {{paddingTop: "40px", marginLeft: "15px", backgroundColor: "transparent", border: 'none', fontSize: "20px", color: "red", outline: 'none', position: "center"}}> <i class="fas fa-utensils"></i> Restaurant </a>
                         </Link>
-                        <Button style = {{margin:"25px 0px", backgroundColor: "transparent", border: 'none', fontSize: "20px", color: "red", outline: 'none'}} variant='link' onClick={this.handleOrder}> <i class="fas fa-hamburger"></i> Orders </Button>
+                        <Button href='/user/orders' style = {{margin:"25px 0px", backgroundColor: "transparent", border: 'none', fontSize: "20px", color: "red", outline: 'none'}} variant='link' onClick={this.handleOrder}> <i class="fas fa-hamburger"></i> Orders </Button>
                         <Button href='/allUsers' style = {{margin:"25px 0px", backgroundColor: "transparent", border: 'none', fontSize: "20px", color: "red", outline: 'none'}} variant='link'> <i class="fas fa-users"></i> Users</Button>
                         <Dropdown style={{marginLeft:"900px", marginTop: "20px"}}>
                             <Dropdown.Toggle style={{backgroundColor: "red", border: "1px solid red"}}id="dropdown-basic"> <i class="fas fa-user"></i> </Dropdown.Toggle>

@@ -12,6 +12,8 @@ import YelpImage from './../images/yelp_logo.jpg'
 import axios from 'axios';
 import backendServer from "../../backendServer";
 //import Modal from "react-modal";
+import {getUserProfile} from "../queries/queries";
+import { graphql, withApollo } from 'react-apollo';
 
 class restUserProfile extends Component {
     constructor(props) {
@@ -27,33 +29,35 @@ class restUserProfile extends Component {
         this.handleCloseModal = this.handleCloseModal.bind(this);
     }
 
-    componentWillMount() {
-        axios.get(`${backendServer}/yelp/userProfile/${this.props.match.params.user_id}`)
-        .then(res => {
-            console.log(res);
-            this.setState({ restUserProfile: res.data });
-    })
+    async componentDidMount() {
+        const { data } = await this.props.client.query({
+          query: getUserProfile,
+          variables: {id: this.props.match.params.user_id },
+          fetchPolicy: "no-cache",
+        });
+        console.log(data);
+        this.setState({restUserProfile: data.userProfile})
     }
 
-    handleFollowing = (e) => {
-        e.preventDefault();
-        const data = {
-            firstName: this.state.restUserProfile.firstName,
-            lastName: this.state.restUserProfile.lastName,
-            userId: this.state.restUserProfile._id,
-            address: this.state.restUserProfile.address
-        }
-        axios.post(`${backendServer}/yelp/userProfile/updateFollowing/${localStorage.getItem("user_id")}`, data)
-        .then(response => {
-            if(response.status ===200) {
-            alert("Following!!!");
-            window.location = '/allUsers'
-            }
-        })
-            .catch(err => {
-            console.log("Error");
-        });
-    }
+    // handleFollowing = (e) => {
+    //     e.preventDefault();
+    //     const data = {
+    //         firstName: this.state.restUserProfile.firstName,
+    //         lastName: this.state.restUserProfile.lastName,
+    //         userId: this.state.restUserProfile._id,
+    //         address: this.state.restUserProfile.address
+    //     }
+    //     axios.post(`${backendServer}/yelp/userProfile/updateFollowing/${localStorage.getItem("user_id")}`, data)
+    //     .then(response => {
+    //         if(response.status ===200) {
+    //         alert("Following!!!");
+    //         window.location = '/allUsers'
+    //         }
+    //     })
+    //         .catch(err => {
+    //         console.log("Error");
+    //     });
+    // }
 
     onChange = (e) => {
         this.setState({
@@ -84,64 +88,31 @@ class restUserProfile extends Component {
         })
     }
 
-    handleSendMessage = (e) => {
-        e.preventDefault();
-        console.log(this.state.message)
-        var today = new Date();
-        var current_date = ((today.getMonth()+1)+"/"+today.getDate()+"/"+today.getFullYear());
-        var current_time = (today.getHours() + ":"+today.getMinutes()+":"+today.getSeconds());
-        const data = {
-            orderId: this.props.location.state.orderId,
-            message: this.state.message,
-            date: current_date,
-            time: current_time,
-            owner: localStorage.getItem("rest_name")
-        }
-        axios.post(`${backendServer}/yelp/messages/initiate`, data)
-        .then(response => {
-            if(response.status === 200) {
-                alert("Message successfully sent")
-            }
-        })
-    }
+    // handleSendMessage = (e) => {
+    //     e.preventDefault();
+    //     console.log(this.state.message)
+    //     var today = new Date();
+    //     var current_date = ((today.getMonth()+1)+"/"+today.getDate()+"/"+today.getFullYear());
+    //     var current_time = (today.getHours() + ":"+today.getMinutes()+":"+today.getSeconds());
+    //     const data = {
+    //         orderId: this.props.location.state.orderId,
+    //         message: this.state.message,
+    //         date: current_date,
+    //         time: current_time,
+    //         owner: localStorage.getItem("rest_name")
+    //     }
+    //     axios.post(`${backendServer}/yelp/messages/initiate`, data)
+    //     .then(response => {
+    //         if(response.status === 200) {
+    //             alert("Message successfully sent")
+    //         }
+    //     })
+    // }
     
     render() {
-        console.log(this.props);
-        console.log(this.props.match.params.user_id);
-        let renderFollow;
-        if (localStorage.getItem("user") === 'True') {
-            renderFollow = <div class='col-xs-4' style={{marginLeft: '1px'}}>
-            <ul class='list-unstyled'>
-                <li>
-                <Button href='/allUsers' style = {{margin:"25px 0px", marginLeft: "475px", backgroundColor: "red", border: 'none', fontSize: "17px", color: "white", outline: 'none'}} variant='link' onClick={this.handleFollowing}> <i class="fas fa-user-plus"></i> Follow</Button>
-                </li>
-            </ul>
-        
-       </div>
-        } else {
-            renderFollow = <div class='col-xs-4' style={{marginLeft: '1px'}}>
-            <ul class='list-unstyled'>
-                <li>
-                <Button  style = {{margin:"25px 0px", marginLeft: "475px", backgroundColor: "red", border: 'none', fontSize: "17px", color: "white", outline: 'none'}} variant='link' onClick={this.handleOpenModal}> <i class="fas fa-comments"></i> Message </Button>
-                </li>
-            </ul>
-            <Modal show={this.state.showModal} onHide={this.handleCloseModal}>
-                <Modal.Header closeButton>
-                    <Modal.Title style={{fontSize: "30px"}}>Send a message to {this.state.restUserProfile.firstName}</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    <h4> Order Id: {this.props.location.state.orderId}</h4>
-                    <input class="form-control input-md" type='text' style={{ height: '70px'}} onChange={this.handleInputChange}/>
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button style={{border: "1px solid red", backgroundColor: "red", color: 'white',  width: "100px", borderRadius: '5px'}} onClick = {this.handleSendMessage}>Send</Button>
-                </Modal.Footer>
-            </Modal>
-       </div>
-
-    }
-        var fileName = this.state.restUserProfile.fileName
-        var imgSrc = `${backendServer}/yelp/upload/restaurant/${fileName}`
+        console.log(this.state.restUserProfile)
+        // var fileName = this.state.restUserProfile.fileName
+        // var imgSrc = `${backendServer}/yelp/upload/restaurant/${fileName}`
 
         return (
         <div style={{margin:"5px"}}>
@@ -150,7 +121,7 @@ class restUserProfile extends Component {
                     <div class='row'>
                         <div class='col-xs-3 card profilePic' style={{position:"absolute"}}>
                             <card>
-                                <CardImg style={{height: "300px", width: "225px"}}variant='top' src={imgSrc} className='profileImg'/>
+                                <CardImg style={{height: "300px", width: "225px"}}variant='top' className='profileImg'/>
                             </card>
                         </div>
                         <div class='col-xs-4 profileName' style={{position: "relative", marginLeft: "250px"}}>
@@ -159,7 +130,6 @@ class restUserProfile extends Component {
                             <p style={{fontSize:"13px"}}>{this.state.restUserProfile.email}</p>
                             
                         </div>
-                       {renderFollow}
                     </div>
             </div>
             <div class='row' style={{ marginLeft:"10px"}}>
@@ -196,16 +166,5 @@ class restUserProfile extends Component {
     )}
 }
 
-// userProfile.propTypes = {
-//     getUser: PropTypes.func.isRequired,
-//     user: PropTypes.object.isRequired
-// }
 
-// const mapStateToProps = state => { 
-//     return ({
-//     user: state.userProfile.user
-// })};
-
-// export default connect(mapStateToProps, { getUser })(userProfile);
-
-export default restUserProfile;
+export default withApollo(restUserProfile)

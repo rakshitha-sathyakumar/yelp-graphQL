@@ -79,6 +79,7 @@ const orderType = new GraphQLObjectType({
     name: 'orders',
     fields: () => ({
         id: { type: GraphQLID },
+        userId: {type:  GraphQLString},
         restName: { type: GraphQLString },
         dishName: { type: GraphQLString },
         firstName: { type: GraphQLString },
@@ -172,7 +173,32 @@ const RootQuery = new GraphQLObjectType({
             return restReviews[0].review;
         }
     },
-
+    getRestSearch: {
+        type: new GraphQLList(restProfileType),
+        args: {keyword: {type: GraphQLString}, category: {type: GraphQLInt}},
+        async resolve(parent, args) {
+            if (args.category === 1) {
+                filter = { deliveryMethod: { $regex: args.keyword, $options: 'i' } };
+            }
+            else  if (args.category === 2) {
+                filter = { city: { $regex: args.keyword, $options: 'i' } };
+            }
+            else  if (args.category === 3) {
+                filter = { cuisine: { $regex: args.keyword, $options: 'i' } };
+            }
+            else  if (args.category === 4) {
+                filter = { menu: {dishName: { $regex: args.keyword, $options: 'i' } }};
+            }
+            else  if (args.category === 5) {
+                filter = { name: { $regex: args.keyword, $options: 'i' } };
+            }
+            else {
+                filter = {}
+            }
+            let searchResult = await rest.find(filter);
+            return searchResult;
+        }
+    },
 
     }
 })

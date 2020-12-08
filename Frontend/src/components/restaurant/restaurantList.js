@@ -5,8 +5,10 @@ import illusionsImage from '../images/restList.jpg';
 import {Button, Card, CardGroup, Form} from 'react-bootstrap';
 import axios from 'axios';
 import backendServer from "../../backendServer";
-import MapContainer from '../maps'
+//import MapContainer from '../maps'
 import ReactPaginate from 'react-paginate';
+import {getSearchResult} from '../queries/queries';
+import { graphql, withApollo } from 'react-apollo';
 import './pagination.css';
 
 const location = {
@@ -38,17 +40,15 @@ componentDidMount () {
             searchCategory: this.props.location.state.searchCategory,
             searchKeyword: this.props.location.state.searchKeyword,
           },
-          () => {
-          axios.get(`${backendServer}/restaurantSearch/${this.state.searchKeyword}/${this.state.searchCategory}`,)
-            .then((response) => {
-              console.log(response)
-                this.setState({
-                  restList: response.data, tempRestList: response.data
-                });
-              })
-              .catch((error) => {
-                console.log(error);
-              });
+          async () => {
+            const { data } = await this.props.client.query({
+              query: getSearchResult,
+              variables: {keyword: this.state.searchKeyword, category: parseInt(this.state.searchCategory) },
+              fetchPolicy: "no-cache",
+            });
+            console.log(data);
+            this.setState({restList: data.getRestSearch})
+            this.setState({tempRestList: data.getRestSearch})
           },
         );
     };
@@ -64,16 +64,15 @@ componentDidUpdate() {
             searchKeyword: this.props.location.state.searchKeyword,
             searchCategory: this.props.location.state.searchCategory,
         },
-        () => {
-          axios.get(`${backendServer}/restaurantSearch/${this.state.searchKeyword}/${this.state.searchCategory}`,)
-            .then((response) =>
-              this.setState({
-                tempRestList: response.data
-              }),
-            )
-            .catch((error) => {
-              console.log(error);
-            });
+        async () => {
+          const { data } = await this.props.client.query({
+            query: getSearchResult,
+            variables: {keyword: this.state.searchKeyword, category: parseInt(this.state.searchCategory) },
+            fetchPolicy: "no-cache",
+          });
+          console.log(data);
+          this.setState({restList: data.getRestSearch})
+          this.setState({tempRestList: data.getRestSearch})
         },
       );
     }
@@ -119,16 +118,17 @@ handleClick = (e) => {
     );
 };
 
-componentWillReceiveProps(nextProps){
-    this.setState({
-      ...this.state,
-      tempRestList : !nextProps.tempRestList ? this.state.tempRestList : nextProps.tempRestList,
-      pageCount: Math.ceil(this.state.tempRestList.length / this.state.perPage)  
-    }
-   );	
-  }
+// componentWillReceiveProps(nextProps){
+//     this.setState({
+//       ...this.state,
+//       tempRestList : !nextProps.tempRestList ? this.state.tempRestList : nextProps.tempRestList,
+//       pageCount: Math.ceil(this.state.tempRestList.length / this.state.perPage)  
+//     }
+//    );	
+//   }
 
     render() {
+      console.log(typeof(this.state.searchCategory));
       console.log(this.state.tempRestList);
 
         const count = this.state.tempRestList.length;
@@ -158,7 +158,7 @@ componentWillReceiveProps(nextProps){
             return (
                 <div class='col-md-6'>
                     <Card style={{margin: "10px", border:"1px solid black"}}>
-                        <Card.Img id = {rest.rest_id} name={rest.name} style={{height: "150px", width: "200px"}}variant="top" src={imgSrc} onClick={this.handleClick} />
+                        <Card.Img id = {rest.id} name={rest.name} style={{height: "150px", width: "200px"}}variant="top" src={imgSrc} onClick={this.handleClick} />
                         <Card.Body>
                         <Card.Title variant="link">  
                             <a id = {rest._id} name={rest.name} onClick={this.handleClick}>{rest.name} </a>
@@ -212,10 +212,10 @@ componentWillReceiveProps(nextProps){
               {paginationElement}
             </div>
             </div>
-            <MapContainer restaurantlist={this.state.restList}></MapContainer> 
+            {/* <MapContainer restaurantlist={this.state.restList}></MapContainer>  */}
             </div>
             </React.Fragment>
         )}
 }
 
-export default viewRest;
+export default withApollo(viewRest);
