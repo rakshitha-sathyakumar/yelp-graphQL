@@ -75,6 +75,26 @@ mutation updateOrderStatus ($id: String, $status: String ){
 }
 `;
 
+const addReviewMutation= gql`
+mutation addReview ($id: String, $firstName: String, $lastName: String, $review: String, $date: String, $rating: String){
+    addReview(id: $id, firstName: $firstName, lastName: $lastName, review: $review, date: $date, rating: $rating)
+{
+    message
+    status
+}
+}
+`;
+
+const addOrderMutation= gql`
+mutation addOrder ($restId: String, $id: String, $restName: String, $dishName: String, $firstName: String, $lastName: String, $orderType: String, $date: String, $time: String, $orderStatus: String, $finalOrderStatus: String){
+    addOrder(restId: $restId, id: $id, restName: $restName, dishName: $dishName, firstName: $firstName, lastName: $lastName, orderType: $orderType, date: $date, time: $time, orderStatus: $orderStatus, finalOrderStatus: $finalOrderStatus)
+{
+    message
+    status
+}
+}
+`;
+
 export {addUserMutation,
     addRestMutation,
     loginMutation,
@@ -82,5 +102,7 @@ export {addUserMutation,
     updateRestMutation,
     addDishMutation,
     updateDishMutation,
-    updateOrderStatusMutation
+    updateOrderStatusMutation,
+    addReviewMutation,
+    addOrderMutation
 };

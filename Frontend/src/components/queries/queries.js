@@ -127,6 +127,19 @@ query($keyword: String, $category: Int){
 }
 `;
 
+const getUserMenu = gql`
+query($id: String){
+    getUserMenuList(id: $id){
+            id
+            dishName
+            ingredients
+            price
+            description
+            category    
+}
+}
+`;
+
 
 export { getUserProfile,
     getRestProfile,
@@ -135,5 +148,6 @@ export { getUserProfile,
     getRestOrders,
     getUserOrders,
     getRestReviews,
-    getSearchResult
-    };
+    getSearchResult,
+    getUserMenu
+};

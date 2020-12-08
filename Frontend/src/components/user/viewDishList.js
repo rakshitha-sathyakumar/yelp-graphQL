@@ -12,8 +12,12 @@ import { connect } from 'react-redux';
 import { getAllMenuUser } from '../../actions/menuAction';
 import { addOrder } from '../../actions/orderAction';
 import ReactPaginate from 'react-paginate';
+import {getUserMenu} from '../queries/queries';
+import {addOrderMutation} from '../../mutations/mutations';
+import { graphql, withApollo } from 'react-apollo';
 import '../restaurant/pagination.css';
 import PropTypes from 'prop-types';
+import { compose } from 'recompose'
 
 export class getDish extends Component {
     constructor(props) {
@@ -29,15 +33,17 @@ export class getDish extends Component {
         this.handleCheckboxChange = this.handleCheckboxChange.bind(this);
     }
 
-    componentDidMount() {
-        this.props.getAllMenuUser();
-        // axios.get(`${backendServer}/yelp/viewMenu/${localStorage.getItem("rest_id")}`)
-        // .then(res => {
-        //     //console.log(res.data)
-        //     this.setState({ menuList: res.data });
-        //     // console.log(this.state.menuList);
-        // });
+    async componentDidMount() {
+        {
+            const { data } = await this.props.client.query({
+              query: getUserMenu,
+              variables: { id: localStorage.getItem("rest_id")},
+              fetchPolicy: "no-cache",
+            });
+            console.log(data)
+            this.setState({menuList: data.getUserMenuList})
     }
+}
 
     handlePageClick = e => {
         alert("inside handle");
@@ -52,15 +58,15 @@ export class getDish extends Component {
     };
 
 
-    componentWillReceiveProps(nextProps){
-        console.log(nextProps)
-        this.setState({
-          ...this.state,
-          menuList : !nextProps.user ? this.state.menuList : nextProps.user,
-          pageCount: Math.ceil(this.state.menuList.length / this.state.perPage)  
-        }
-       );	
-      }
+    // componentWillReceiveProps(nextProps){
+    //     console.log(nextProps)
+    //     this.setState({
+    //       ...this.state,
+    //       menuList : !nextProps.user ? this.state.menuList : nextProps.user,
+    //       pageCount: Math.ceil(this.state.menuList.length / this.state.perPage)  
+    //     }
+    //    );	
+    //   }
 
 
     handleCheckboxChange = (e) => {
@@ -75,40 +81,47 @@ export class getDish extends Component {
       })
     }
 
-    onOrder = (e) => {
+    onOrder = async (e) => {
         e.preventDefault();
+        
         var today = new Date();
         var current_date = (today.getMonth()+1)+"/"+today.getDate()+"/"+today.getFullYear();
         var current_time = (today.getHours() + ":"+today.getMinutes()+":"+today.getSeconds());
-        const data = {
-            user_id: localStorage.getItem("user_id"),
-            rest_id: localStorage.getItem("rest_id"),
-            rest_name: localStorage.getItem("rest_name"),
-            dish_id: this.state.dish_id,
-            dish_name: this.state.dishName,
-            order_type: this.state.orderType,
-            first_name: localStorage.getItem("first_name"),
-            last_name: localStorage.getItem("last_name"),
+        let mutationResponse = await this.props.addOrderMutation({
+        variables: {
+            id: localStorage.getItem("id"),
+            restId: localStorage.getItem("rest_id"),
+            restName: localStorage.getItem("rest_name"),
+            dishName: this.state.dishName,
+            orderType: this.state.orderType,
+            firstName: localStorage.getItem("firstName"),
+            lastName: localStorage.getItem("lastName"),
             date: current_date,
             time: current_time
         }
-        console.log(data);
-        this.props.addOrder(data);
-        // return axios.post(`${backendServer}/yelp/order`,data)
-        // .then((response) => {
-        //     console.log(response.status)
-        //   if (response.status === 200) {
-        //     alert("Order Successful ")
-        //     window.location = `/user/orders`
-        //   }
-        // })
-        // .catch(function(error) {
-        //    alert("Error")
-        // })
-      }
+        });
+        console.log(mutationResponse)
+        let response = mutationResponse.data.addOrder;
+        if (response) {
+            if (response.status === "200") {
+                console.log(response)
+                this.setState({
+                    success: true,
+                    signupFlag: true
+                });
+            } else {
+                this.setState({
+                    message: response.message,
+                    signupFlag: true
+                });
+            }
+        }
+    }
     
     render () {
-        console.log(this.props.user)
+        if(this.state.success){
+            alert("Order has been placed successfully");
+        }
         console.log(this.state.menuList);
 
         const count = this.state.menuList.length;
@@ -131,7 +144,6 @@ export class getDish extends Component {
             />
           );
 
-        console.log(this.state.menuList);
         let renderMenu;
         if(this.state.menuList) {
         renderMenu = slice.map(menu => {
@@ -190,19 +202,4 @@ export class getDish extends Component {
          
 }
 
-getDish.propTypes = {
-    getAllMenuUser: PropTypes.func.isRequired,
-    addOrder: PropTypes.func.isRequired,
-    user: PropTypes.object.isRequired,
-    status: PropTypes.object.isRequired
-  };
-
-  const mapStateToProps = state => {
-    return ({
-    user: state.getMenu.user, 
-    status: state.orders.state
-  })
-};
-
-export default connect(mapStateToProps, { getAllMenuUser, addOrder})(getDish);
-// export default getDish;
+export default compose(withApollo,  graphql(addOrderMutation, { name: "addOrderMutation" }))(getDish);

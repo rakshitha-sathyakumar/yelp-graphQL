@@ -3,7 +3,10 @@ import Navigationbar from '../navigation';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import { Form, Button, Carousel} from 'react-bootstrap';
 import axios from 'axios';
+import { Redirect } from 'react-router';
 import backendServer from "../../backendServer";
+import {addReviewMutation} from '../../mutations/mutations';
+import { graphql, withApollo } from 'react-apollo';
 
 class addReview extends Component {
 constructor(props) {
@@ -30,33 +33,47 @@ handleRadio = (e) => {
 }
 
 
-onSubmit = (e) => {
+onSubmit = async (e) => {
     var today = new Date();
     var current_date = (today.getMonth()+1)+"/"+today.getDate()+"/"+today.getFullYear();
     console.log(current_date)
   e.preventDefault();
-  const data = {
-    rest_id: localStorage.getItem("rest_id"),
-    firstName: localStorage.getItem("first_name"),
-    lastName: localStorage.getItem("last_name"),
+  let mutationResponse = await this.props.addReviewMutation({
+  variables: {
+    id: localStorage.getItem("rest_id"),
+    firstName: localStorage.getItem("firstName"),
+    lastName: localStorage.getItem("lastName"),
     review: this.state.review,
     date: current_date,
     rating: this.state.rating
   }
-  return axios.post(`${backendServer}/yelp/addReview`,data)
-  .then((response) => {
-      console.log(response.status)
-    if (response.status === 200) {
-      window.location = '/restaurant_profile';
+});
+console.log(mutationResponse)
+        let response = mutationResponse.data.addReview;
+        if (response) {
+            if (response.status === "200") {
+                console.log(response)
+                this.setState({
+                    success: true,
+                    signupFlag: true
+              });
+            } else {
+                this.setState({
+                    message: response.message,
+                    signupFlag: true
+              });
+          }
     }
-  })
-  .catch(function(error) {
-     alert("Error")
-  })
-}
+  }
     render() {
+      let redirectVar = null;
+      if(this.state.success){
+      alert("Review added successfully");
+      redirectVar = <Redirect to="/restaurant_profile" />
+      }
       return (
         <React.Fragment>
+          {redirectVar}
           <Navigationbar />
           <div class='container'>
             <div class='row'>
@@ -104,4 +121,4 @@ onSubmit = (e) => {
     }
   }
 
-  export default addReview;
+  export default graphql(addReviewMutation, {name: "addReviewMutation"}) (addReview);

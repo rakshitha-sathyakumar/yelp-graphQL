@@ -15,7 +15,7 @@ import { connect } from 'react-redux';
 import { getRestOrders } from "../queries/queries";
 import { graphql, withApollo } from 'react-apollo';
 import {updateOrderStatusMutation} from '../../mutations/mutations';
-import { compose } from 'recompose'
+import { compose } from 'recompose';
 
 export class restOrders extends Component {
     constructor(props) {

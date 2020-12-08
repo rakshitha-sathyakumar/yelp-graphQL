@@ -7,6 +7,8 @@ const { userSignup, restSignup } = require('../mutations/signup');
 const { updateUserProfile } = require('../mutations/updateProfile');
 const { updateRestProfile } = require('../mutations/updateProfile');
 const { addDish, updateDish, updateOrderStatus } = require('../mutations/updateDish');
+const {addReview} = require('../mutations/addReview');
+const {addOrder} = require('../mutations/addOrder');
 
 const {
     GraphQLObjectType,
@@ -199,6 +201,14 @@ const RootQuery = new GraphQLObjectType({
             return searchResult;
         }
     },
+    getUserMenuList: {
+        type: new GraphQLList(restMenuType),
+        args: { id: { type: GraphQLString }},
+        async resolve(parent, args) {
+            let userMenu = await rest.findById({ "_id": args.id })
+            return userMenu.menu;
+        }
+    },
 
     }
 })
@@ -329,7 +339,41 @@ const Mutation = new GraphQLObjectType({
                 return result;
             }
         },
-
+        addReview: {
+            type: StatusType,
+            args: {
+                id: { type: GraphQLString },
+                firstName: { type: GraphQLString },
+                lastName: { type: GraphQLString },
+                review: { type: GraphQLString },
+                date: { type: GraphQLString },
+                rating: { type: GraphQLString },
+            },
+            async resolve(parent, args) {
+                let result = await addReview(args);
+                return result;
+            }
+        },
+        addOrder: {
+            type: StatusType,
+            args: {
+                restId: { type: GraphQLString },
+                id: { type: GraphQLString },
+                restName: { type: GraphQLString },
+                dishName: { type: GraphQLString },
+                firstName: { type: GraphQLString },
+                lastName: { type: GraphQLString },
+                orderType: { type: GraphQLString },
+                date: { type: GraphQLString },
+                time: { type: GraphQLString },
+                orderStatus: { type: GraphQLString },
+                finalOrderStatus: { type: GraphQLString },
+            },
+            async resolve(parent, args) {
+                let result = await addOrder(args);
+                return result;
+            }
+        },
     }
 })
 
